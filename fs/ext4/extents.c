@@ -887,6 +887,12 @@ ext4_find_extent(struct inode *inode, ext4_lblk_t block,
 		gfp_flags |= __GFP_NOFAIL;
 
 	eh = ext_inode_hdr(inode);
+	if (eh->eh_magic != EXT4_EXT_MAGIC) {
+		EXT4_ERROR_INODE(inode, "Extent header has invalid magic.");
+		ret = -EFSCORRUPTED;
+		goto err;
+	}
+
 	depth = ext_depth(inode);
 	if (depth < 0 || depth > EXT4_MAX_EXTENT_DEPTH) {
 		EXT4_ERROR_INODE(inode, "inode has invalid extent depth: %d",
