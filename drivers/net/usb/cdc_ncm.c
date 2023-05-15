@@ -163,6 +163,8 @@ static u32 cdc_ncm_check_rx_max(struct usbnet *dev, u32 new_rx)
 	}
 
 	val = clamp_t(u32, new_rx, min, max);
+	dev_err(&dev->intf->dev, "%s: [new_rx, min, max] [%u, %u, %u] range\n",
+		__func__, new_rx, min, max);
 	if (val != new_rx)
 		dev_dbg(&dev->intf->dev, "rx_max must be in the [%u, %u] range\n", min, max);
 
@@ -187,6 +189,8 @@ static u32 cdc_ncm_check_tx_max(struct usbnet *dev, u32 new_tx)
 	/* some devices set dwNtbOutMaxSize too low for the above default */
 	min = min(min, max);
 
+	dev_err(&dev->intf->dev, "%s: [new_tx, min, max] [%u, %u, %u]\n",
+		__func__, new_tx, min, max);
 	val = clamp_t(u32, new_tx, min, max);
 	if (val != new_tx)
 		dev_dbg(&dev->intf->dev, "tx_max must be in the [%u, %u] range\n", min, max);
@@ -579,7 +583,7 @@ static int cdc_ncm_init(struct usbnet *dev)
 	/* devices prior to NCM Errata shall set this field to zero */
 	ctx->tx_max_datagrams = le16_to_cpu(ctx->ncm_parm.wNtbOutMaxDatagrams);
 
-	dev_dbg(&dev->intf->dev,
+	dev_err(&dev->intf->dev,
 		"dwNtbInMaxSize=%u dwNtbOutMaxSize=%u wNdpOutPayloadRemainder=%u wNdpOutDivisor=%u wNdpOutAlignment=%u wNtbOutMaxDatagrams=%u flags=0x%x\n",
 		ctx->rx_max, ctx->tx_max, ctx->tx_remainder, ctx->tx_modulus,
 		ctx->tx_ndp_modulus, ctx->tx_max_datagrams, cdc_ncm_flags(dev));
@@ -595,6 +599,7 @@ static int cdc_ncm_init(struct usbnet *dev)
 	else
 		ctx->max_ndp_size = sizeof(struct usb_cdc_ncm_ndp32) + (ctx->tx_max_datagrams + 1) * sizeof(struct usb_cdc_ncm_dpe32);
 
+	dev_err(&dev->intf->dev, "ctx->max_ndp_size = %u\n", ctx->max_ndp_size);
 	/* initial coalescing timer interval */
 	ctx->timer_interval = CDC_NCM_TIMER_INTERVAL_USEC * NSEC_PER_USEC;
 
@@ -707,6 +712,8 @@ static int cdc_ncm_setup(struct usbnet *dev)
 	def_tx = min_t(u32, CDC_NCM_NTB_DEF_SIZE_TX,
 		       le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize));
 
+	dev_err(&dev->intf->dev, "%s le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize) = %u, le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize) = %u \n",
+		__func__, le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize), le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize));
 	/* clamp rx_max and tx_max and inform device */
 	cdc_ncm_update_rxtx_max(dev, def_rx, def_tx);
 
